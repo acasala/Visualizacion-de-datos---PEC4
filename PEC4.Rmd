@@ -4,7 +4,7 @@ title: 'Visualización de datoss: PEC4'
 author: "Autor: Alejandro Casal (acasal@uoc.edu)"
 date: "8 de junio de 2020"
 abstract: |
-   Documento de trabajo para el análisis exploratorio de datos inicial. No pretende ser por lo tanto un documento formal para presentación sino tan solo de soporte.
+   Script para deduplicar información de acuerdos de paz, para a partir de los datos originales regenerar registros independientes asociado cada acuerdo de paz con cada una de las temáticas que aborda
 output:
   pdf_document:
     fig_width: 6
