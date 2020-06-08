@@ -1,0 +1,199 @@
+
+---
+title: 'Visualización de datoss: PEC4'
+author: "Autor: Alejandro Casal (acasal@uoc.edu)"
+date: "8 de junio de 2020"
+abstract: |
+   Documento de trabajo para el análisis exploratorio de datos inicial. No pretende ser por lo tanto un documento formal para presentación sino tan solo de soporte.
+output:
+  pdf_document:
+    fig_width: 6
+    fig_height: 4
+    highlight: zenburn
+    keep_tex: yes
+    toc: no
+    number_sections: yes
+    df_print: kable
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+  word_document: 
+    toc: yes
+fontsize: 10 pt
+---
+
+
+
+
+```{r setup, include=FALSE}
+
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE,background='#222222',echo=TRUE,message=FALSE,warning=FALSE,fig.width =7, fontsize='10pt')
+#knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width =7, tidy = TRUE, tidy.opts = list(blank = FALSE, width.cutoff = 60))
+```
+
+Indicamos paquetes R que vamos a usar 
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(grid)
+library(gridExtra)
+library(Hmisc)
+library(purrr)
+library(reshape2)
+library(plyr)
+library(openxlsx)
+library(tidyverse) 
+```
+
+```{r}
+lGroups <- c('GCh','GDis','GAge','GMig','GRa','GRe','GInd','GOth','GRef','GSoc')
+lGender <- c('GeWom','GeMe','GeLgbti','GeFa')
+lStateDefinition <- c('StDef')
+lGovernance <- c('Pol','ConRen','Cons','Ele','ElecComm','PolPar','Civso','Tral','Pubad')
+lPowersharing <- c('Polps','Terps','Eps','Mps')
+lHumanRights <- c('HrGen','EqGen','HrDem','Prot','HrFra','HrCp','HrSec','HrNi','HrIi','HrMob','HrDet','Med','HrCit')
+lJusticeReform <- c('JusCr','JusEm','JusJu','JusPri','JusTra')
+lEconomic <- c('Dev','NEC','NatRes','IntFu','Bus','Tax','Ban')
+lLand <- c('LaRef','LaNom','LaCH','LaEn','Wat')
+lSecurity <- c('SsrGua','Ce','SsrPol','SsrArm','SsrDdr','SsrInt','SsrPsf','SsrFf','Cor','SsrCrOcr','SsrDrugs','Terr')
+lTransitionalJustice <- c('TjGen','TjAm','TjCou','TjMech','TjPrire','TjVet','TjVic','TjMis','TjRep','TjNR')
+
+df <- read.xlsx('PA/pax_all_agreements_data.xlsx')
+
+campos <- c("BI.Agreement.ID","BI.Loc1ISO",lGroups,lGender,lStateDefinition,lGovernance,lPowersharing,lHumanRights,lJusticeReform,lEconomic,lLand,lSecurity,lTransitionalJustice)
+df <- df[,campos]
+
+df2 <- df
+df[df > 0] <- 1
+df$BI.Agreement.ID <- df2$BI.Agreement.ID
+df$BI.Loc1ISO <- df2$BI.Loc1ISO
+
+
+df$Topic <- NULL
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lGroups]) > 0, "Groups", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lGender]) > 0, "Gender", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(as.data.frame(df[,lStateDefinition]) > 0), "State Definition", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lGovernance]) > 0, "Governance", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lPowersharing]) > 0, "Powersharing", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lHumanRights]) > 0, "Human rights and equality", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lJusticeReform]) > 0, "Justice Sector Reform", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lEconomic]) > 0, "Socio-Economic Reconstruction", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lLand]) > 0, "Land, property, and environment", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lSecurity]) > 0, "Security Sector", ""),sep=";" )
+df$Topic <- paste(df$Topic, ifelse(rowSums(df[,lTransitionalJustice]) > 0, "Transitional Justice", ""),sep=";" )
+
+df$GroupsAvg <- rowSums(df[,lGroups])/length(lGroups)
+df$GenderAvg <- rowSums(df[,lGender])/length(lGender)
+df$StateDefinitionAvg <- rowSums(as.data.frame(df[,lStateDefinition]))/length(lStateDefinition)
+df$GovernanceAvg <- rowSums(df[,lGovernance])/length(lGovernance)
+df$PowersharingAvg <- rowSums(df[,lPowersharing])/length(lPowersharing)
+df$HumanRightsAvg <- rowSums(df[,lHumanRights])/length(lHumanRights)
+df$JusticeReformAvg <- rowSums(df[,lJusticeReform])/length(lJusticeReform)
+df$EconomicAvg <- rowSums(df[,lEconomic])/length(lEconomic)
+df$LandAvg <- rowSums(df[,lLand])/length(lLand)
+df$SecurityAvg <- rowSums(df[,lSecurity])/length(lSecurity)
+df$TransitionalJusticeAvg <- rowSums(df[,lTransitionalJustice])/length(lTransitionalJustice)
+
+df$GroupsSum <- rowSums(df[,lGroups])
+df$GenderSum <- rowSums(df[,lGender])
+df$StateDefinitionSum <- rowSums(as.data.frame(df[,lStateDefinition]))
+df$GovernanceSum <- rowSums(df[,lGovernance])
+df$PowersharingSum <- rowSums(df[,lPowersharing])
+df$HumanRightsSum <- rowSums(df[,lHumanRights])
+df$JusticeReformSum <- rowSums(df[,lJusticeReform])
+df$EconomicSum <- rowSums(df[,lEconomic])
+df$LandSum <- rowSums(df[,lLand])
+df$SecuritySum <- rowSums(df[,lSecurity])
+df$TransitionalJusticeSum <- rowSums(df[,lTransitionalJustice])
+
+df$GroupsMax <- apply(df[,lGroups], 1, max)
+df$GenderMax <- apply(df[,lGender], 1, max)
+df$StateDefinitionMax <- apply(as.data.frame(df[,lStateDefinition]), 1, max)
+df$GovernanceMax <- apply(as.data.frame(df[,lGovernance]), 1, max)
+df$PowersharingMax <- apply(df[,lPowersharing], 1, max)
+df$HumanRightsMax <- apply(df[,lHumanRights], 1, max)
+df$JusticeReformMax <- apply(df[,lJusticeReform], 1, max)
+df$EconomicMax <- apply(df[,lEconomic], 1, max)
+df$LandMax <- apply(df[,lLand], 1, max)
+df$SecurityMax <- apply(df[,lSecurity], 1, max)
+df$TransitionalJusticeMax <- apply(df[,lTransitionalJustice], 1, max)
+
+campos <- c("BI.Agreement.ID","Topic",
+            "GroupsAvg","GenderAvg","StateDefinitionAvg","GovernanceAvg","PowersharingAvg",
+            "HumanRightsAvg","JusticeReformAvg", "EconomicAvg","LandAvg","SecurityAvg","TransitionalJusticeAvg",
+            "GroupsMax","GenderMax","StateDefinitionMax","GovernanceMax","PowersharingMax",
+            "HumanRightsMax","JusticeReformMax", "EconomicMax","LandMax","SecurityMax","TransitionalJusticeMax",
+            "GroupsSum","GenderSum","StateDefinitionSum","GovernanceSum","PowersharingSum",
+            "HumanRightsSum","JusticeReformSum", "EconomicSum","LandSum","SecuritySum","TransitionalJusticeSum")
+
+
+#dfTopics <- df[,c("BI.Agreement.ID","Topic")]
+dfTopics <- df[,campos]
+
+dfTopics <- separate_rows(dfTopics, Topic, sep=";", convert = TRUE)
+dfTopics <- unique(dfTopics)
+
+dfTopics$Max <- NULL
+dfTopics$Max[dfTopics$Topic == ""] <- 0
+dfTopics$Max[dfTopics$Topic == "Groups"] <- dfTopics$GroupsMax
+dfTopics$Max[dfTopics$Topic == "Gender"] <- dfTopics$GenderMax
+dfTopics$Max[dfTopics$Topic == "State Definition"] <- dfTopics$StateDefinitionMax
+dfTopics$Max[dfTopics$Topic == "Governance"] <- dfTopics$GovernanceMax
+dfTopics$Max[dfTopics$Topic == "Powersharing"] <- dfTopics$PowersharingMax
+dfTopics$Max[dfTopics$Topic == "Human rights and equality"] <- dfTopics$HumanRightsMax
+dfTopics$Max[dfTopics$Topic == "Justice Sector Reform"] <- dfTopics$JusticeReformMax
+dfTopics$Max[dfTopics$Topic == "Socio-Economic Reconstruction"] <- dfTopics$EconomicMax
+dfTopics$Max[dfTopics$Topic == "Land, property, and environment"] <- dfTopics$LandMax
+dfTopics$Max[dfTopics$Topic == "Security Sector"] <- dfTopics$SecurityMax
+dfTopics$Max[dfTopics$Topic == "Transitional Justice"] <- dfTopics$TransitionalJusticeMax
+
+dfTopics$Avg <- NULL
+dfTopics$Avg[dfTopics$Topic == ""] <- 0
+dfTopics$Avg[dfTopics$Topic == "Groups"] <- dfTopics$GroupsAvg
+dfTopics$Avg[dfTopics$Topic == "Gender"] <- dfTopics$GenderAvg
+dfTopics$Avg[dfTopics$Topic == "State Definition"] <- dfTopics$StateDefinitionAvg
+dfTopics$Avg[dfTopics$Topic == "Governance"] <- dfTopics$GovernanceAvg
+dfTopics$Avg[dfTopics$Topic == "Powersharing"] <- dfTopics$PowersharingAvg
+dfTopics$Avg[dfTopics$Topic == "Human rights and equality"] <- dfTopics$HumanRightsAvg
+dfTopics$Avg[dfTopics$Topic == "Justice Sector Reform"] <- dfTopics$JusticeReformAvg
+dfTopics$Avg[dfTopics$Topic == "Socio-Economic Reconstruction"] <- dfTopics$EconomicAvg
+dfTopics$Avg[dfTopics$Topic == "Land, property, and environment"] <- dfTopics$LandAvg
+dfTopics$Avg[dfTopics$Topic == "Security Sector"] <- dfTopics$SecurityAvg
+dfTopics$Avg[dfTopics$Topic == "Transitional Justice"] <- dfTopics$TransitionalJusticeAvg
+
+dfTopics$Sum <- NULL
+dfTopics$Sum[dfTopics$Topic == ""] <- 0
+dfTopics$Sum[dfTopics$Topic == "Groups"] <- dfTopics$GroupsSum
+dfTopics$Sum[dfTopics$Topic == "Gender"] <- dfTopics$GenderSum
+dfTopics$Sum[dfTopics$Topic == "State Definition"] <- dfTopics$StateDefinitionSum
+dfTopics$Sum[dfTopics$Topic == "Governance"] <- dfTopics$GovernanceSum
+dfTopics$Sum[dfTopics$Topic == "Powersharing"] <- dfTopics$PowersharingSum
+dfTopics$Sum[dfTopics$Topic == "Human rights and equality"] <- dfTopics$HumanRightsSum
+dfTopics$Sum[dfTopics$Topic == "Justice Sector Reform"] <- dfTopics$JusticeReformSum
+dfTopics$Sum[dfTopics$Topic == "Socio-Economic Reconstruction"] <- dfTopics$EconomicSum
+dfTopics$Sum[dfTopics$Topic == "Land, property, and environment"] <- dfTopics$LandSum
+dfTopics$Sum[dfTopics$Topic == "Security Sector"] <- dfTopics$SecuritySum
+dfTopics$Sum[dfTopics$Topic == "Transitional Justice"] <- dfTopics$TransitionalJusticeSum
+
+
+dfTopicsR <- dfTopics[,c("BI.Agreement.ID","Topic","Max","Avg","Sum")]
+colnames(dfTopicsR) <- c("BI Agreement ID","Topic","TopicMax","TopicAvg","TopicSum")
+
+tematicas <- c('Groups','Gender','StateDefinition','Governance','Powersharing','HumanRights', 'JusticeReform', 'Economic','Land','Security','TransitionalJustice')
+
+dfIntraLocal <- df[df$Agtp == "IntraLocal",]
+dfTopicsR <- dfTopicsR[dfTopicsR$Topic != "",]
+dfTopicsR <- dfTopicsR[dfTopicsR$TopicSum > 0,]
+
+df <- as.data.frame(lapply(df,iconv, from = "UTF-8"))
+
+write.xlsx(dfTopicsR, "topics.xlsx")
+#write.csv(df, "intralocal.csv")
+
+```
